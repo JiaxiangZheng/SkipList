@@ -14,15 +14,15 @@ static int randomLevel() {  //return 1~MAX_LEVEL
 template <typename KeyType, typename DataType>
 struct SkipNode {
 	std::pair<KeyType, DataType> value;
-    SkipNode<KeyType, DataType>** forward;  //stores the pointers to next elements of different levels
+    SkipNode<KeyType, DataType>** forward;  //stores the pointers to next elements of different levels 
 };
 
 //create skipnode whose forward field contains level'th element
 template <typename KeyType, typename DataType>
-SkipNode<KeyType, DataType>* createNode(const std::pair<KeyType, DataType>& value, int level) {       
+SkipNode<KeyType, DataType>* createNode(const std::pair<KeyType, DataType>& value, int level) {
     SkipNode<KeyType, DataType>* node = new SkipNode<KeyType, DataType>;
 	node->value = value;
-    node->forward = new SkipNode<KeyType, DataType>*[level];       
+    node->forward = new SkipNode<KeyType, DataType>*[level];
     for (int i=0; i<level; ++i) {
         node->forward[i] = NULL;
     }
@@ -56,19 +56,17 @@ SkipList<KeyType, DataType, CompareFunc>::~SkipList() {
 template <typename KeyType, typename DataType, class CompareFunc>
 bool SkipList<KeyType, DataType, CompareFunc>::insert(const std::pair<KeyType, DataType>& value) {
     SkipNode<KeyType, DataType> *update[SKIPLIST_MAX_LEVEL], *node = this->head;
-	CompareFunc cmp;
     
     //search for the insert position
     for (int i=this->level - 1; i >= 0; i--) {
-        while (node->forward[i] != NULL && cmp(node->forward[i]->value.first, value.first)) {
+        while (node->forward[i] != NULL && node->forward[i]->value.first < value.first) {  
             node = node->forward[i];
         }
         update[i] = node; //point to the left most element whose key field is less than key or the head.
     }
     node = node->forward[0]; // if it points to NULL, denotes this is the maximum key to be inserted
 
-    if (node != NULL && !cmp(node->value.first, value.first) && !cmp(value.first, node->value.first)) return false;
-
+    if (node != NULL && node->value.first == value.first) return false;
     int newLevel = randomLevel();
     if (this->level < newLevel) {
         for (int i=this->level; i < newLevel; ++i) update[i] = this->head;
@@ -78,26 +76,21 @@ bool SkipList<KeyType, DataType, CompareFunc>::insert(const std::pair<KeyType, D
     for (int i=0; i<newLevel; ++i) {
         node->forward[i] = update[i]->forward[i];
         update[i]->forward[i] = node;
-    }
-
+    } 
     return true;
 }
 
 template <typename KeyType, typename DataType, class CompareFunc>
 SkipNode<KeyType, DataType>* SkipList<KeyType, DataType, CompareFunc>::find(KeyType key) {
-	CompareFunc cmp;
 	SkipNode<KeyType, DataType> *node = this->head;
     //search for the insert position
     for (int i=this->level - 1; i >= 0; i--) {
-        while (node->forward[i] != NULL && cmp(node->forward[i]->value.first, key)) {
+        while (node->forward[i] != NULL && node->forward[i]->value.first < key) {  
             node = node->forward[i];
         }
     }
     node = node->forward[0];
-	if (node != NULL && 
-            (cmp(node->value.first, key) 
-                || cmp(key, node->value.first))
-        ) return NULL;
+	if (node != NULL && node->value.first != key) return NULL;
 	else return node;
 }
 
@@ -107,20 +100,16 @@ SkipNode<KeyType, DataType>* SkipList<KeyType, DataType, CompareFunc>::find(KeyT
 template <typename KeyType, typename DataType, class CompareFunc>
 SkipNode<KeyType, DataType>* SkipList<KeyType, DataType, CompareFunc>::remove(KeyType key) {
     SkipNode<KeyType, DataType> *update[SKIPLIST_MAX_LEVEL], *node = this->head;
-	CompareFunc cmp;
     //search for the insert position
     for (int i=this->level - 1; i >= 0; i--) {
-        while (node->forward[i] != NULL && cmp(node->forward[i]->value.first, key)) {
+        while (node->forward[i] != NULL && node->forward[i]->value.first < key) {  
             node = node->forward[i];
         }
         update[i] = node; //point to the left most element whose key field is less than key or the head.
     }
     node = node->forward[0];
 
-    if (node == NULL || 
-            cmp(nodenode->value.first, key) || 
-            cmp(key, node->value.first))
-        return NULL;
+    if (node == NULL || node->value.first != key) return NULL;
     for (int i=0; i<this->level; ++i) {
         if (update[i]->forward[i] == node) {
             update[i]->forward[i] = node->forward[i];

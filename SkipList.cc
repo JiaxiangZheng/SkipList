@@ -33,7 +33,7 @@ void map_test(int elem_size) {
 }
 
 void skip_list_test(int elem_size) {
-    long tic = GetTime();    
+    long tic = GetTime();
     SkipList<int, int, std::less<int>> l;
     for (int i=0; i<elem_size ; ++i) {
         int e = rand() % 1000;
